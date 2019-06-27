@@ -4,11 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
-import { 
-	workspace, 
-	ExtensionContext, 
-	commands, 
-	window, 
+import {
+	workspace,
+	ExtensionContext,
+	commands,
+	window,
 	extensions,
 	ConfigurationTarget } from 'vscode';
 
@@ -36,8 +36,8 @@ export function activate(ctx: ExtensionContext) {
 		run: { command: serverModule, transport: TransportKind.stdio },
 		debug: { command: serverModule, transport: TransportKind.stdio }
 		// ,
-		// run: { 
-		// 	command: serverModule, 
+		// run: {
+		// 	command: serverModule,
 		// 	transport: {
 		// 		kind: TransportKind.socket,
 		// 		port: 8888
@@ -83,22 +83,34 @@ export function activate(ctx: ExtensionContext) {
 	let languageServerDisposable = client.start();
 	ctx.subscriptions.push(languageServerDisposable);
 
-	ctx.subscriptions.push(commands.registerCommand('tron.languageserver.restart', async () => {
-		console.log("stopping..");
-		await client.stop();
-		console.log("stoped..");
-		languageServerDisposable.dispose();
-		console.log("disposed..");
-		languageServerDisposable = client.start();
-		console.log("restarted..");
-		ctx.subscriptions.push(languageServerDisposable);
-	}));
+	// ctx.subscriptions.push(commands.registerCommand('tron.languageserver.restart', async () => {
+	// 	console.log("stopping..");
+	// 	await client.stop();
+	// 	console.log("stoped..");
+	// 	languageServerDisposable.dispose();
+	// 	console.log("disposed..");
+	// 	languageServerDisposable = client.start();
+	// 	console.log("restarted..");
+	// 	ctx.subscriptions.push(languageServerDisposable);
+	// }));
 
 	ctx.subscriptions.push(commands.registerCommand('tron.includes', async () => {
-		const configuration = workspace.getConfiguration();
+		commands.executeCommand('workbench.action.openWorkspaceSettings');
+		const currentDocument = window.activeTextEditor.document;
+		const configuration = workspace.getConfiguration('', currentDocument.uri);
 		const currentValue = configuration.get('tron.includes', {});
-		const target = workspace.workspaceFolders ? ConfigurationTarget.WorkspaceFolder : ConfigurationTarget.Global;
-		await configuration.update('tron.includes', ["path here"], target);
+		await configuration.update('tron.includes', currentValue, ConfigurationTarget.WorkspaceFolder);
+		commands.executeCommand('settings.switchToJSON');
+
+		// if (window.activeTextEditor) {
+		// 	const currentDocument = window.activeTextEditor.document;
+		// 	// 1) Get the configuration for the current document
+		// 	const configuration = workspace.getConfiguration('', currentDocument.uri);
+		// 	// 2) Get the configuration value
+		// 	const currentValue = configuration.get('tron.includes', {});
+		// 	const target = workspace.workspaceFolders ? ConfigurationTarget.WorkspaceFolder : ConfigurationTarget.Global;
+		// 	await configuration.update('tron.includes', ["path here"], target);
+		// }
 	}));
 
 	ctx.subscriptions.push(commands.registerCommand('tron.show.commands', () => {
@@ -110,6 +122,54 @@ export function activate(ctx: ExtensionContext) {
 			}
 		});
 	}));
+
+
+
+	commands.registerCommand('config.commands.configureEmptyLastLineFiles', async () => {
+		// 1) Getting the value
+		const value = await window.showInputBox({ prompt: 'Provide glob pattern of files to have empty last line.' });
+		if (workspace.workspaceFolders) {
+			// 2) Getting the target
+			const target = await window.showQuickPick([
+					{ label: 'Application', description: 'User Settings', target: ConfigurationTarget.Global },
+					{ label: 'Workspace', description: 'Workspace Settings', target: ConfigurationTarget.Workspace },
+					{ label: 'Workspace Folder', description: 'Workspace Folder Settings', target: ConfigurationTarget.WorkspaceFolder }
+				],
+				{ placeHolder: 'Select the target to which this setting should be applied' });
+			if (value && target) {
+				if (target.target === ConfigurationTarget.WorkspaceFolder) {
+					// 3) Getting the workspace folder
+					let workspaceFolder = await window.showWorkspaceFolderPick({ placeHolder: 'Pick Workspace Folder to which this setting should be applied' });
+					if (workspaceFolder) {
+						// 4) Get the configuration for the workspace folder
+						const configuration = workspace.getConfiguration('', workspaceFolder.uri);
+						// 5) Get the current value
+						const currentValue = configuration.get('conf.resource.insertEmptyLastLine');
+						const newValue = { ...currentValue, ...{ [value]: true } };
+						// 6) Update the configuration value
+						await configuration.update('conf.resource.insertEmptyLastLine', newValue, target.target);
+					}
+				} else {
+					// 3) Get the configuration
+					const configuration = workspace.getConfiguration();
+					// 4) Get the current value
+					const currentValue = configuration.get('conf.resource.insertEmptyLastLine');
+					const newValue = { ...currentValue, ...(value ? { [value]: true } : {}) };
+					// 3) Update the value in the target
+					await workspace.getConfiguration().update('conf.resource.insertEmptyLastLine', newValue, target.target);
+				}
+			}
+		} else {
+			// 2) Get the configuration
+			const configuration = workspace.getConfiguration();
+			// 3) Get the current value
+			const currentValue = configuration.get('conf.resource.insertEmptyLastLine');
+			const newValue = { ...currentValue, ...(value ? { [value]: true } : {}) };
+			// 4) Update the value in the User Settings
+			await workspace.getConfiguration().update('conf.resource.insertEmptyLastLine', newValue, ConfigurationTarget.Global);
+		}
+	});
+
 
 }
 

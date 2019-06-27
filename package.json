@@ -188,11 +188,6 @@
 				"command": "tron.show.commands",
 				"title": "Tron: Show All Commands...",
 				"description": "Shows all commands from the Tron extension in the quick pick"
-			},
-			{
-				"command": "tron.languageserver.restart",
-				"title": "Tron: Restart Language Server",
-				"description": "Restart the running instance of the language server"
 			}
 		],
 		"menus": {
