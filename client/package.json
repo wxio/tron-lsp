@@ -1,13 +1,13 @@
 {
-	"name": "lsp-sample-client",
+	"name": "tron-lsp-client",
 	"description": "VSCode part of a language server",
-	"author": "Microsoft Corporation",
+	"author": "Late Bound",
 	"license": "MIT",
-	"version": "0.0.1",
-	"publisher": "vscode",
+	"version": "1.0.0",
+	"publisher": "wxio-tron-lsp",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-extension-samples"
+		"url": "https://github.com/wxio/tron-lsp"
 	},
 	"engines": {
 		"vscode": "^1.26.0"
